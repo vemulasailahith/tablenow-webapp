@@ -138,3 +138,56 @@ You would need to:
 - stop serving `dist/` from the backend as the primary frontend delivery path
 
 For the current codebase, a single combined deployment is the simplest option.
+
+## Deploy frontend on Vercel and backend on Render
+
+Yes, you can deploy the frontend on Vercel and keep the backend on Render.
+
+For that setup:
+
+- Render hosts the Express backend
+- Vercel hosts the Vite frontend
+- the frontend must call the Render backend URL instead of `/api`
+
+This repo now supports that with:
+
+- `VITE_API_URL` for the frontend
+
+Set this in Vercel:
+
+`VITE_API_URL=https://your-render-service.onrender.com/api`
+
+### What to deploy to Vercel
+
+You can connect the same GitHub repo to Vercel.
+Vercel only needs the frontend build output, but it can still build from the full repo.
+
+Recommended Vercel settings:
+
+- Framework Preset: `Vite`
+- Root Directory: repo root
+- Build Command: `npm run build`
+- Output Directory: `dist`
+
+### What about the other files
+
+These are fine to keep in the same repo:
+
+- `backend/`
+- `render.yaml`
+- `DEPLOY.md`
+- `firestore.rules`
+- config files at the repo root
+
+Vercel does not need to run the backend files for the frontend deployment.
+They can stay in the repo without a problem.
+
+### One more thing for split deployment
+
+If your backend is on Render and frontend is on Vercel, the backend should allow requests from your Vercel frontend domain.
+
+Right now the backend uses open CORS:
+
+`app.use(cors());`
+
+That works for testing, but for production you may later want to restrict it to your Vercel domain.
