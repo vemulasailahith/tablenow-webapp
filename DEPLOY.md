@@ -1,19 +1,24 @@
-# Deployment Guide
+# Deploy Both Frontend and Backend
 
-## Overview
+## Architecture
 
-This project is split into:
+This project deploys as one full-stack app:
 
-- `frontend/`: React + Vite app
-- `backend/`: Express API server
-- `dist/`: Production frontend build output
+- `frontend/` contains the React + Vite frontend
+- `backend/` contains the Express backend
+- `dist/` contains the built frontend files
 
-In development, the Express server starts Vite in middleware mode.
-In production, the Express server serves the built files from `dist/`.
+In production:
+
+1. Vite builds the frontend into `dist/`
+2. The Express backend serves the frontend from `dist/`
+3. The same backend process also handles `/api/*` routes
+
+That means you do not need two separate deployments unless you want to split them later.
 
 ## Required environment variables
 
-Set these in your deployment platform's environment or secrets manager:
+Set these in your deployment platform:
 
 - `MONGODB_URI`
 - `JWT_SECRET`
@@ -21,9 +26,13 @@ Set these in your deployment platform's environment or secrets manager:
 - `APP_URL`
 - `NODE_ENV=production`
 
-Use `.env.example` as the template for local development.
+Use the real deployed base URL for `APP_URL`, for example:
 
-## Local verification
+`https://your-app-domain.com`
+
+Do not use a route like `/login` for `APP_URL`.
+
+## Local development
 
 1. Install dependencies:
    `npm install`
@@ -33,64 +42,99 @@ Use `.env.example` as the template for local development.
 4. Open:
    `http://localhost:3000`
 
-## Production build
+## How frontend deployment works
 
-1. Install dependencies:
-   `npm install`
-2. Build the frontend:
-   `npm run build`
-3. Confirm the build output exists in `dist/`
+The frontend is built with:
 
-## Production start
+`npm run build`
 
-The production server entry is:
+That command:
+
+- uses Vite with `frontend/` as the app root
+- reads static assets from `frontend/public`
+- writes the production frontend bundle into `dist/`
+
+After the build, the frontend is ready to be served by the backend.
+
+## How backend deployment works
+
+The backend entry file is:
 
 `backend/server.ts`
 
-Because the repo uses TypeScript directly at runtime in development, your deployment should do one of these:
+In development, it starts Vite middleware.
+In production, when `NODE_ENV=production`, it serves the built frontend from `dist/`.
 
-1. Run the server with `tsx`
-2. Or add a compile step for the backend and run compiled JavaScript
+So the backend is responsible for:
 
-The simplest current option is to start with:
+- API routes
+- MongoDB connection
+- auth and booking endpoints
+- serving the frontend app
 
-`npx tsx backend/server.ts`
+## Deploy both together
 
-Make sure `NODE_ENV=production` is set so Express serves `dist/` instead of starting Vite middleware.
+Recommended deployment flow:
 
-## Recommended deployment flow
-
-1. `npm install`
-2. Set environment variables
-3. `npm run build`
-4. Start the server with:
+1. Install dependencies:
+   `npm install`
+2. Set production environment variables
+3. Build frontend:
+   `npm run build`
+4. Start backend in production:
    `npx tsx backend/server.ts`
 
-## Platform notes
+This runs both backend and frontend together, because the backend serves the built frontend files.
 
-- The app listens on port `3000` in the current code.
-- Some platforms provide their own `PORT` value. If you deploy to one of those, update the server to read `process.env.PORT` before deploying.
-- `APP_URL` should be the base deployed URL, for example:
-  `https://your-domain.com`
-- Do not set `APP_URL` to a route like `/login`.
+## Render deployment
 
-## Pre-deploy checklist
+This repo now includes [render.yaml](/c:/Users/vemul/OneDrive/Desktop/sailahith/tablenow/render.yaml), so you can deploy it on Render as a single web service.
 
-- `npm run lint` passes
-- `npm run build` passes
-- MongoDB allows connections from your deployment environment
-- `JWT_SECRET` is a strong production secret
-- `APP_URL` is your real production base URL
-- `.env` is not committed with real secrets
+On Render:
 
-## Current limitation
+1. Create a new Blueprint or Web Service from your GitHub repo
+2. Use the existing `render.yaml`
+3. Set the secret environment variables:
+   `MONGODB_URI`, `JWT_SECRET`, `GEMINI_API_KEY`, and `APP_URL`
+4. Deploy
 
-The backend currently hardcodes:
+Render will:
 
-`const PORT = 3000;`
+- run `npm install && npm run build`
+- start the app with `npm run start`
+- inject `PORT` automatically
 
-For wider deployment compatibility, update it to something like:
+The backend already supports Render's dynamic port with:
 
 `const PORT = Number(process.env.PORT) || 3000;`
 
-That change is recommended before deploying to platforms like Render, Railway, or Cloud Run.
+## Recommended production commands
+
+Build command:
+
+`npm install && npm run build`
+
+Start command:
+
+`npx tsx backend/server.ts`
+
+## Pre-deployment checklist
+
+- `npm run lint` passes
+- `npm run build` passes
+- `MONGODB_URI` works from the hosted environment
+- `JWT_SECRET` is set in secrets
+- `GEMINI_API_KEY` is set in secrets
+- `APP_URL` is the real production base URL
+- `.env` is not committed
+
+## If you want separate frontend and backend deployments later
+
+You would need to:
+
+- deploy the frontend independently
+- point frontend API calls to the backend domain
+- enable CORS for that frontend origin
+- stop serving `dist/` from the backend as the primary frontend delivery path
+
+For the current codebase, a single combined deployment is the simplest option.

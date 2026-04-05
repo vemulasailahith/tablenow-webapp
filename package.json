@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "tsx backend/server.ts",
     "build": "vite build",
+    "start": "tsx backend/server.ts",
     "preview": "vite preview",
     "clean": "powershell -NoProfile -Command \"Remove-Item -Recurse -Force dist -ErrorAction SilentlyContinue\"",
     "lint": "tsc --noEmit"
