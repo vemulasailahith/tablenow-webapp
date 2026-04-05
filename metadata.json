@@ -1,0 +1,5 @@
+{
+  "name": "TableNow",
+  "description": "A premium restaurant table booking application with real-time reservations and map-based discovery.",
+  "requestFramePermissions": ["geolocation"]
+}

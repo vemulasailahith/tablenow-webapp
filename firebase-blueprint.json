@@ -1,0 +1,73 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "User account information and preferences.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Firebase Auth UID" },
+        "displayName": { "type": "string", "description": "Full name of the user" },
+        "email": { "type": "string", "format": "email" },
+        "role": { "type": "string", "enum": ["user", "admin"], "description": "User role for access control" },
+        "favorites": { "type": "array", "items": { "type": "string" }, "description": "List of restaurant IDs" }
+      },
+      "required": ["uid", "email", "role"]
+    },
+    "Restaurant": {
+      "title": "Restaurant",
+      "description": "Information about a dining establishment.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "category": { "type": "string" },
+        "priceRange": { "type": "string", "enum": ["$", "$$", "$$$", "$$$$"] },
+        "rating": { "type": "number" },
+        "reviewsCount": { "type": "integer" },
+        "address": { "type": "string" },
+        "location": {
+          "type": "object",
+          "properties": {
+            "lat": { "type": "number" },
+            "lng": { "type": "number" }
+          }
+        },
+        "imageUrl": { "type": "string", "format": "uri" },
+        "openingHours": { "type": "string" }
+      },
+      "required": ["name", "category", "location"]
+    },
+    "Booking": {
+      "title": "Table Booking",
+      "description": "A reservation record.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "restaurantId": { "type": "string" },
+        "restaurantName": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "time": { "type": "string" },
+        "guests": { "type": "integer" },
+        "status": { "type": "string", "enum": ["upcoming", "completed", "canceled"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "restaurantId", "date", "time", "guests", "status"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Individual user profiles."
+    },
+    "/restaurants/{restaurantId}": {
+      "schema": "Restaurant",
+      "description": "Restaurant catalog."
+    },
+    "/bookings/{bookingId}": {
+      "schema": "Booking",
+      "description": "All table reservations."
+    }
+  }
+}
